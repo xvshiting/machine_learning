@@ -1,0 +1,109 @@
+---
+title: "Machine_learning"
+author: "xvshiting"
+date: "Sunday,27,september"
+output: 
+  html_document: 
+    keep_md: yes
+---
+## Abstract
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.This report is about predicting the manner n which people did their exercises based on the data from wearable sensors.
+
+
+##Loading and processing the data
+
+```{r eval=FALSE}
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",destfile = "pml-training.csv", 
+              method = "curl")
+```
+
+```{r cache=TRUE}
+pml_data <- read.csv("pml-training.csv")
+
+```
+
+##Clean data
+In the data there are many variables in the pml_data set with missing value,we should drop those colums we just use the residual colums to make a predict.We use the below data to choose the variable don't have missing value .Most important we reduce the col which value isn't numeric except the outcome colum.
+
+```{r cache=TRUE}
+library(dplyr,warn.conflicts = FALSE)
+library(caret,warn.conflicts = FALSE)
+set.seed(1234)
+pml_data<-pml_data[,-c(1,2,3,4,5,6,7)]
+pml_data<-pml_data[,colSums(is.na(pml_data)|pml_data=="")/nrow(pml_data)==0]
+non.numeric.values <- mapply(is.numeric, pml_data, SIMPLIFY = TRUE)
+non.numeric.values["classe"] <- TRUE # avoid removing the outcome
+pml_data <- pml_data[ , non.numeric.values]
+names(pml_data)
+```
+
+
+We split the clean data into two parts,the training part occupy 60% and 20% testing data,20% cross validation set.
+```{r cache=TRUE}
+training<-createDataPartition(y=pml_data$classe,p=0.6,list = FALSE)
+Trian_data<-pml_data[training,]
+test_data<-pml_data[-training,]
+testing<-createDataPartition(y=test_data$classe,p=0.5,list = FALSE)
+validation_data<-test_data[testing,]
+test_data<-test_data[-testing,]
+
+```
+
+##Choose predictor-SVD
+
+Then we plot the sigular value of the Training data,So look at this figure we could see we can pick up head of 1-20 variables to be predictor.
+
+```{r cache=TRUE ,echo=FALSE}
+options(scipen = 3)
+svd1<-svd(scale(Trian_data[,1:52]))
+plot(svd1$d,xlab = "colums",ylab = "sigular value",main = "SVD-d for clean data",col=rgb(1,0,0,0.2),pch=19)
+train_data<-Trian_data[,c(1:20,53)]
+validation_data<-validation_data[,c(1:20,53)]
+test_data<-test_data[,c(1:20,53)]
+```
+
+##Fit Model-Random Forest
+
+We use the random forest method and our traning sample error is 2.8%.
+
+```{r cache=TRUE}
+require(randomForest)
+pre<-train_data[,-21]
+des<-train_data[,21]
+rffit <-randomForest(pre, des)
+rffit
+
+```
+
+## cross validation
+
+Our cross validation accuracy is 97.43%,so that means our model don't have a overfit probelm,Maybe we could add more feature to improve the accuracy,but this accuracy use 20 features to predict is just fine.
+```{r cache=TRUE}
+predClass <- predict (rffit, validation_data)
+confusionMatrix (validation_data$classe,predClass)
+```
+
+There is the wrong predicted result.
+
+```{r cache=TRUE,echo=FALSE}
+validation_data$result<-predClass!=validation_data$classe
+g<-ggplot(validation_data[validation_data$result,],aes(classe,roll_belt,col=classe))
+g+geom_point()
+```
+
+##Result
+
+We use this fit model on our 20 test samples.
+
+```{r cache=TRUE}
+test <- read.csv("pml-testing.csv")
+test<-test[,-c(1,2,3,4,5,6,7)]
+test<-test[,colSums(is.na(test)|test=="")/nrow(test)==0]
+non.numeric.values <- mapply(is.numeric, test, SIMPLIFY = TRUE)
+test<- test[ , non.numeric.values]
+test<-test[,1:20]
+predClass <- predict (rffit, test)
+print(predClass)
+
+```

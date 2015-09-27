@@ -26,6 +26,14 @@ In the data there are many variables in the pml_data set with missing value,we s
 ```r
 library(dplyr,warn.conflicts = FALSE)
 library(caret,warn.conflicts = FALSE)
+```
+
+```
+## Loading required package: lattice
+## Loading required package: ggplot2
+```
+
+```r
 set.seed(1234)
 pml_data<-pml_data[,-c(1,2,3,4,5,6,7)]
 pml_data<-pml_data[,colSums(is.na(pml_data)|pml_data=="")/nrow(pml_data)==0]
@@ -81,6 +89,21 @@ We use the random forest method and our traning sample error is 2.8%.
 
 ```r
 require(randomForest)
+```
+
+```
+## Loading required package: randomForest
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.
+## 
+## Attaching package: 'randomForest'
+## 
+## The following object is masked from 'package:dplyr':
+## 
+##     combine
+```
+
+```r
 pre<-train_data[,-21]
 des<-train_data[,21]
 rffit <-randomForest(pre, des)

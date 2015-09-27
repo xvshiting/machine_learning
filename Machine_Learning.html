@@ -81,8 +81,10 @@ img {
 <h2>Clean data</h2>
 <p>In the data there are many variables in the pml_data set with missing value,we should drop those colums we just use the residual colums to make a predict.We use the below data to choose the variable don’t have missing value .Most important we reduce the col which value isn’t numeric except the outcome colum.</p>
 <pre class="r"><code>library(dplyr,warn.conflicts = FALSE)
-library(caret,warn.conflicts = FALSE)
-set.seed(1234)
+library(caret,warn.conflicts = FALSE)</code></pre>
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2</code></pre>
+<pre class="r"><code>set.seed(1234)
 pml_data&lt;-pml_data[,-c(1,2,3,4,5,6,7)]
 pml_data&lt;-pml_data[,colSums(is.na(pml_data)|pml_data==&quot;&quot;)/nrow(pml_data)==0]
 non.numeric.values &lt;- mapply(is.numeric, pml_data, SIMPLIFY = TRUE)
@@ -123,8 +125,17 @@ test_data&lt;-test_data[-testing,]</code></pre>
 <div id="fit-model-random-forest" class="section level2">
 <h2>Fit Model-Random Forest</h2>
 <p>We use the random forest method and our traning sample error is 2.8%.</p>
-<pre class="r"><code>require(randomForest)
-pre&lt;-train_data[,-21]
+<pre class="r"><code>require(randomForest)</code></pre>
+<pre><code>## Loading required package: randomForest
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.
+## 
+## Attaching package: 'randomForest'
+## 
+## The following object is masked from 'package:dplyr':
+## 
+##     combine</code></pre>
+<pre class="r"><code>pre&lt;-train_data[,-21]
 des&lt;-train_data[,21]
 rffit &lt;-randomForest(pre, des)
 rffit</code></pre>
